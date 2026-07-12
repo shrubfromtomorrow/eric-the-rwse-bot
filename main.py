@@ -37,24 +37,6 @@ bot.add_cog(Cog(bot))
 # IF YOU NEED A PERSISTENT DATABASE
 # bot.add_cog(Cog(bot, mongo))
 
-@bot.command()
-@commands.guild_only()
-async def activate_cog(ctx: commands.Context):
-  try:
-    # bot.add_cog(COG_NAME_HERE(bot, mongo))
-    await ctx.send('Activated COG_NAME_HERE!')
-  except discord.errors.ClientException:
-    await ctx.send('COG_NAME_HERE is already active.')
-
-@bot.command()
-@commands.guild_only()
-async def deactivate_adaptive_slowmode(ctx: commands.Context):
-  try:
-    # bot.remove_cog(COG_NAME_HERE(bot, mongo))
-    await ctx.send('Deactivated adaptive slowmode!')
-  except discord.errors.ClientException:
-    await ctx.send('Adaptive slowmode is already inactive.')
-
 @bot.event
 async def on_error(event_name, *args, **kwargs):
   err = traceback.format_exc()
@@ -73,7 +55,7 @@ async def on_application_command_error(ctx: commands.Context, error: commands.Co
   await print_error(f"application command error: {error}")
 
 async def print_error(error_string: str):
-  logbook_channel = await bot.fetch_channel(1517697376461000807)
+  logbook_channel = await bot.fetch_channel(1523012846756167760)
   
   if len(error_string) <= 3900:
     embed = discord.Embed(title="Error Log", description=f'```{error_string}```', color=4491263)
@@ -102,12 +84,11 @@ async def print_error(error_string: str):
 async def on_ready():
   print('\n\n************************ READY ************************\n\n')
 
-  settings_channel = await bot.fetch_channel(1517697376461000807)
+  settings_channel = await bot.fetch_channel(1523013584349561037)
   
   embed = discord.Embed(title='Alive!', color=4776171, description=f"""
 Awake! My prefix is `{bot.command_prefix}` 
-My latency: `{round(bot.latency * 1000)}` ms
-MongoDB latency: `{round(latency_ms)}` ms""")
+My latency: `{round(bot.latency * 1000)}` ms""")
 
   await settings_channel.send(embed=embed)
   
