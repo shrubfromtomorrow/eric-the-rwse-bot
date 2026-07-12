@@ -45,6 +45,6 @@ class Cog(commands.Cog):
         else:
           raise e
 
-      await self.bot.get_channel(1523012846756167760).send(f"# Suspected Bot Autokick\n<@{after.id}> / {after.id}{contacted}")
+      await self.bot.get_channel(1155699597960818698).send(f"# Suspected Bot Autokick\n<@{after.id}> / {after.id}{contacted}")
       await after.remove_roles(kick_role)
       await after.kick(reason=f"Self-selected the bot auto-kick role{contacted}")
