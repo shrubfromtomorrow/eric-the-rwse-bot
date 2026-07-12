@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 from cogs.Cog import Cog
-import sys
 import traceback
 import time
 
@@ -40,13 +39,12 @@ bot.add_cog(Cog(bot))
 
 @bot.event
 async def on_error(event_name, *args, **kwargs):
-  err = sys.exc_info()[1]
-
-  if err is None:
-      await print_error(f"No exception object available for {event_name}")
-      return
-
-  await print_error(err)
+  err = traceback.format_exc()
+  try:
+    float(err)
+    await print_error(f"float coming from on_error, {err}")
+  except ValueError:
+    await print_error(err)
 
 @bot.event
 async def on_command_error(ctx: commands.Context, error: commands.CommandError):
@@ -56,45 +54,30 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError):
 async def on_application_command_error(ctx: commands.Context, error: commands.CommandError):
   await print_error(f"application command error: {error}")
 
-async def print_error(error):
-    if isinstance(error, BaseException):
-        error_string = ''.join(
-            traceback.format_exception(type(error), error, error.__traceback__)
-        )
+async def print_error(error_string: str):
+  logbook_channel = await bot.fetch_channel(1155699597960818698)
+  
+  if len(error_string) <= 3900:
+    embed = discord.Embed(title="Error Log", description=f'```{error_string}```', color=4491263)
+    await logbook_channel.send(embed=embed)
+    return
+  
+  parts = []
+  current_part = ""
+  
+  for line in error_string.split('\n'):
+    if len(current_part) + len(line) + 1 > 3900:
+      parts.append(current_part)
+      current_part = line
     else:
-        error_string = str(error)
-
-    logbook_channel = await bot.fetch_channel(1155699597960818698)
-
-    if len(error_string) <= 3900:
-        embed = discord.Embed(
-            title="Error Log",
-            description=f'```{error_string}```',
-            color=4491263
-        )
-        await logbook_channel.send(embed=embed)
-        return
-
-    parts = []
-    current_part = ""
-
-    for line in error_string.split('\n'):
-        if len(current_part) + len(line) + 1 > 3900:
-            parts.append(current_part)
-            current_part = line
-        else:
-            current_part += '\n' + line if current_part else line
-
-    if current_part:
-        parts.append(current_part)
-
-    for i, part in enumerate(parts):
-        embed = discord.Embed(
-            title=f"Error Log (Part `{i + 1}`/`{len(parts)}`)",
-            description=f'```{part}```',
-            color=4491263
-        )
-        await logbook_channel.send(embed=embed)
+      current_part += '\n' + line if current_part else line
+  
+  if current_part:
+    parts.append(current_part)
+  
+  for i, part in enumerate(parts):
+    embed = discord.Embed(title=f"Error Log (Part `{i + 1}`/`{len(parts)}`)", description=f'```{part}```', color=4491263)
+    await logbook_channel.send(embed=embed)
 
 
 @bot.event
