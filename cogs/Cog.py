@@ -32,7 +32,7 @@ class Cog(commands.Cog):
     # Skip if user has staff role
     for r in after.roles:
       #role IDs in order: immune (shrub testing land), moderator
-      if r.id in [1523015950436270285, 995814248003403837]:
+      if r.id in [995814248003403837]:
         return
 
     if kick_role in after.roles:
