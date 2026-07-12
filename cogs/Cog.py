@@ -25,7 +25,7 @@ class Cog(commands.Cog):
 
   @commands.Cog.listener()
   async def on_member_update(self, before: Member, after: Member):
-    guild = await self.bot.fetch_guild(1518094615360700416)
+    guild = await self.bot.fetch_guild(995807773138890853)
     kick_role = discord.utils.get(guild.roles, name='Bot Kick Role')
     contacted = ''
 
