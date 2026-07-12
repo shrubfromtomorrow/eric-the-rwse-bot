@@ -54,30 +54,34 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError):
 async def on_application_command_error(ctx: commands.Context, error: commands.CommandError):
   await print_error(f"application command error: {error}")
 
-async def print_error(error_string: str):
-  logbook_channel = await bot.fetch_channel(1155699597960818698)
+async def print_error(err):
+    import traceback
+    traceback.print_exception(type(err), err, err.__traceback__)
+
+# async def print_error(error_string: str):
+#   logbook_channel = await bot.fetch_channel(1155699597960818698)
   
-  if len(error_string) <= 3900:
-    embed = discord.Embed(title="Error Log", description=f'```{error_string}```', color=4491263)
-    await logbook_channel.send(embed=embed)
-    return
+#   if len(error_string) <= 3900:
+#     embed = discord.Embed(title="Error Log", description=f'```{error_string}```', color=4491263)
+#     await logbook_channel.send(embed=embed)
+#     return
   
-  parts = []
-  current_part = ""
+#   parts = []
+#   current_part = ""
   
-  for line in error_string.split('\n'):
-    if len(current_part) + len(line) + 1 > 3900:
-      parts.append(current_part)
-      current_part = line
-    else:
-      current_part += '\n' + line if current_part else line
+#   for line in error_string.split('\n'):
+#     if len(current_part) + len(line) + 1 > 3900:
+#       parts.append(current_part)
+#       current_part = line
+#     else:
+#       current_part += '\n' + line if current_part else line
   
-  if current_part:
-    parts.append(current_part)
+#   if current_part:
+#     parts.append(current_part)
   
-  for i, part in enumerate(parts):
-    embed = discord.Embed(title=f"Error Log (Part `{i + 1}`/`{len(parts)}`)", description=f'```{part}```', color=4491263)
-    await logbook_channel.send(embed=embed)
+#   for i, part in enumerate(parts):
+#     embed = discord.Embed(title=f"Error Log (Part `{i + 1}`/`{len(parts)}`)", description=f'```{part}```', color=4491263)
+#     await logbook_channel.send(embed=embed)
 
 
 @bot.event
