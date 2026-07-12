@@ -11,7 +11,6 @@ class Cog(commands.Cog):
 
   @commands.command()
   @commands.guild_only()
-  @commands.has_guild_permissions(administrator=True)
   async def ping(self, ctx: commands.Context):
     latency_ms = self.bot.latency * 1000
     await ctx.reply(f'Boo! My latency is: {latency_ms:.2f}ms')
