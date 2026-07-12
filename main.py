@@ -83,6 +83,10 @@ async def print_error(error_string: str):
 @bot.event
 async def on_ready():
   print('\n\n************************ READY ************************\n\n')
+  
+  print(f"Logged in as {bot.user} ({bot.user.id})")
+  for guild in bot.guilds:
+    print(guild.name, guild.id)
 
   settings_channel = await bot.fetch_channel(1155699597960818698)
   
