@@ -31,7 +31,7 @@ load_dotenv()
 # 
 # IF YOU NEED A PERSISTENT DATABASE
 
-bot = commands.Bot(command_prefix='.', intents=intents)
+bot = commands.Bot(command_prefix='!', intents=intents)
 bot.remove_command('help')
 bot.add_cog(Cog(bot))
 # IF YOU NEED A PERSISTENT DATABASE

@@ -13,7 +13,8 @@ class Cog(commands.Cog):
   @commands.guild_only()
   @commands.has_guild_permissions(administrator=True)
   async def ping(self, ctx: commands.Context):
-    await ctx.reply(f'Boo. My latency is: {self.bot.latency}')
+    latency_ms = self.bot.latency * 1000
+    await ctx.reply(f'Boo! My latency is: {latency_ms:.2f}ms')
 
   # @commands.Cog.listener()
   # async def on_message_delete(self, message: Message):

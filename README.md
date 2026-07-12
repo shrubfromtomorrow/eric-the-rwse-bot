@@ -1,4 +1,4 @@
-This is a compilation of some barebone code for a discord bot. These directions are written to run inside of a linux terminal. 
+To setup for developing Eric (these directions are written to run inside of a linux terminal):
 
 Installing python/pip:
 
