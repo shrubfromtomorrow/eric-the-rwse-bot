@@ -24,13 +24,19 @@ class Cog(commands.Cog):
 
   @commands.Cog.listener()
   async def on_member_update(self, before: Member, after: Member):
+    await self.handle_bot_autokick(before, after)
+    await self.handle_new_feature(before, after)
+
+    
+
+  async def handle_bot_autokick(self, before: Member, after: Member):
     guild = await self.bot.fetch_guild(995807773138890853)
     kick_role = discord.utils.get(guild.roles, name='Bot Kick Role')
     contacted = ''
 
     # Skip if user has staff role
     for r in after.roles:
-      #role IDs in order: immune (shrub testing land), moderator
+      #role IDs in order: moderator
       if r.id in [995814248003403837]:
         return
 
@@ -47,3 +53,12 @@ class Cog(commands.Cog):
       await self.bot.get_channel(1155699597960818698).send(f"# Suspected Bot Autokick\n<@{after.id}> / {after.id}{contacted}")
       await after.remove_roles(kick_role)
       await after.kick(reason=f"Self-selected the bot auto-kick role{contacted}")
+  
+  async def handle_new_feature(self, before: Member, after: Member):
+    guild = await self.bot.fetch_guild(995807773138890853)
+    vol_role = discord.utils.get(guild.roles, name='Volunteer')
+    pre_vol_role = discord.utils.get(guild.roles, name='Previous Volunteer')
+
+    if vol_role in before.roles and vol_role not in after.roles:
+      await self.bot.get_channel(1155699597960818698).send(f"# Volunteer role was removed for \n<@{after.id}>. Added Previous Volunteer")
+      await after.add_roles(pre_vol_role)
