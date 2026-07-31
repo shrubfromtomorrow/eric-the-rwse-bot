@@ -1,9 +1,11 @@
 from logging import log
 import discord
+import aiohttp
 from discord import Bot, Message, ApplicationContext, Member
 from discord.ext import commands
 from discord.ext.commands import errors
 from datetime import datetime, timedelta, timezone
+import random
 
 class Cog(commands.Cog):
   def __init__(self, bot: Bot):
@@ -13,21 +15,96 @@ class Cog(commands.Cog):
   @commands.guild_only()
   async def ping(self, ctx: commands.Context):
     latency_ms = self.bot.latency * 1000
-    await ctx.reply(f'Boo! My latency is: {latency_ms:.2f}ms')
+    embed = discord.Embed(title='Boo!', color=0xF5BDE6, description=f"""
+    Our latency is: {latency_ms:.2f}ms""")
+    await ctx.channel.send(embed=embed)
 
-  # @commands.Cog.listener()
-  # async def on_message_delete(self, message: Message):
-  #   log_channel = self.bot.get_channel(1523012846756167760) 
-  #   if not log_channel:
-  #     log_channel = await self.bot.fetch_channel(1523012846756167760) 
-  #   await log_channel.send(f'New log: {message.author.mention} said: ```{message.content}```')
+
+  @commands.command()
+  @commands.guild_only()
+  async def bingoslug(self, ctx: commands.Context):
+    slugs = {"Monk": "https://static.wikitide.net/rainworldwiki/3/37/Monk_select_screen_layer.png", 
+             "Survivor": "https://static.wikitide.net/rainworldwiki/6/64/Survivor_select_screen_layer.png", 
+             "Hunter": "https://static.wikitide.net/rainworldwiki/7/7d/Hunter_select_screen_layer.png", 
+             "Gourmand": "https://static.wikitide.net/rainworldwiki/d/da/Gourmand_select_screen_layer.png", 
+             "Artificer": "https://static.wikitide.net/rainworldwiki/e/e3/Artificer_select_screen_layer.png", 
+             "Rivulet": "https://static.wikitide.net/rainworldwiki/5/54/Rivulet_select_screen_layer.png", 
+             "Spearmaster": "https://static.wikitide.net/rainworldwiki/6/60/Spearmaster_select_screen_layer.png", 
+             "Saint": "https://static.wikitide.net/rainworldwiki/4/41/Saint_select_screen_layer.png", 
+             "Watcher": "https://static.wikitide.net/rainworldwiki/7/72/Watcher_select_screen_layer.png"}
+    slug = random.choice(list(slugs.keys()))
+    embed = discord.Embed(title="Random Bingo Slugcat:", color=0xF5BDE6, description=f"We choose {slug}!")
+    embed.set_image(url=slugs[slug])
+
+    if (random.random() < 0.005):
+      embed = discord.Embed(title="Random Bingo Slugcat:", color=0xF5BDE6, description=f"We choose INV! <:PeachSilly:1515733112905011260>")
+      embed.set_image(url="https://static.wikitide.net/rainworldwiki/3/3c/DatingSim_blush.gif")
+    
+    await ctx.channel.send(embed=embed)
+
+
+  @commands.command()
+  @commands.guild_only()
+  async def bingoplayer(self, ctx: commands.Context, *, name: str):
+    API_URL = "https://us-central1-bingo-db-57e75.cloudfunctions.net/api/users"
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(API_URL) as response:
+            data = await response.json()
+
+    users = data["users"]
+
+    player = None
+
+    for entry in users:
+        info = entry["info"]
+
+        if info["name_lower"]["stringValue"] == name.lower():
+            player = info
+            break
+
+    if player is None:
+        await ctx.send(f"Could not find player `{name}`.")
+        return
+
+    embed = discord.Embed(
+    title=f"{player['name']['stringValue']}'s Bingo Stats",
+    color=0xF5BDE6
+    )
+
+    wins = int(player.get("wins", {}).get("integerValue", "0"))
+    totalGames = int(player.get("gamesPlayed", {}).get("integerValue", "0"))
+
+    embed.add_field(
+        name="Wins",
+        value=wins,
+        inline=True
+    )
+
+    embed.add_field(
+        name="Games Played",
+        value=totalGames,
+        inline=True
+    )
+
+    embed.add_field(
+      name="Winrate",
+      value=f"{round(wins/totalGames, 2):.0%}",
+      inline=True
+    )
+
+    embed.add_field(
+      name="ELO",
+      value=round(float(player["elo"]["stringValue"])),
+      inline=True
+    )
+
+    await ctx.send(embed=embed)
 
   @commands.Cog.listener()
   async def on_member_update(self, before: Member, after: Member):
     await self.handle_bot_autokick(before, after)
     await self.handle_new_feature(before, after)
-
-    
 
   async def handle_bot_autokick(self, before: Member, after: Member):
     guild = await self.bot.fetch_guild(995807773138890853)

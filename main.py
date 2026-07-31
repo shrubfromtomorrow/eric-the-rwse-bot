@@ -90,9 +90,9 @@ async def on_ready():
 
   settings_channel = await bot.fetch_channel(1155699597960818698)
   
-  embed = discord.Embed(title='Alive!', color=4776171, description=f"""
+  embed = discord.Embed(title='Alive!', color=0xF5BDE6, description=f"""
 Awake! My prefix is `{bot.command_prefix}` 
-My latency: `{round(bot.latency * 1000)}` ms""")
+Our latency: `{round(bot.latency * 1000)}` ms""")
 
   await settings_channel.send(embed=embed)
   
