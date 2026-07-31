@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord.ext.commands import errors
 from datetime import datetime, timedelta, timezone
 import random
+from urllib.parse import quote
 
 class Cog(commands.Cog):
   def __init__(self, bot: Bot):
@@ -51,11 +52,12 @@ class Cog(commands.Cog):
     async with aiohttp.ClientSession() as session:
         async with session.get(API_URL) as response:
             data = await response.json()
-
+  
     users = data["users"]
 
     player = None
 
+    print(name)
     for entry in users:
         info = entry["info"]
 
@@ -99,7 +101,7 @@ class Cog(commands.Cog):
       inline=True
     )
 
-    embed.url = f"https://greatgamedota.github.io/rw-bingo-board-viewer/user/{name}"
+    embed.url = f"https://greatgamedota.github.io/rw-bingo-board-viewer/user/{quote(name)}"
 
     await ctx.send(embed=embed)
 
