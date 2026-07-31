@@ -99,6 +99,8 @@ class Cog(commands.Cog):
       inline=True
     )
 
+    embed.url = f"https://greatgamedota.github.io/rw-bingo-board-viewer/user/{name}"
+
     await ctx.send(embed=embed)
 
   @commands.Cog.listener()
