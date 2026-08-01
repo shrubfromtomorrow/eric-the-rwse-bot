@@ -7,6 +7,8 @@ from discord.ext.commands import errors
 from datetime import datetime, timedelta, timezone
 import random
 from urllib.parse import quote
+import io
+import time
 
 class Cog(commands.Cog):
   def __init__(self, bot: Bot):
@@ -18,7 +20,7 @@ class Cog(commands.Cog):
     latency_ms = self.bot.latency * 1000
     embed = discord.Embed(title='Boo!', color=0xF5BDE6, description=f"""
     Our latency is: {latency_ms:.2f}ms""")
-    await ctx.channel.send(embed=embed)
+    await ctx.reply(embed=embed)
 
 
   @commands.command()
@@ -41,7 +43,68 @@ class Cog(commands.Cog):
       embed = discord.Embed(title="Random Bingo Slugcat:", color=0xF5BDE6, description=f"We choose INV! <:PeachSilly:1515733112905011260>")
       embed.set_image(url="https://static.wikitide.net/rainworldwiki/3/3c/DatingSim_blush.gif")
     
-    await ctx.channel.send(embed=embed)
+    await ctx.reply(embed=embed)
+
+  @commands.command()
+  @commands.guild_only()
+  async def bingoboard(self, ctx: commands.Context, cat: str, modifier: str = None):
+    API_URL = "https://us-central1-bingo-db-57e75.cloudfunctions.net/api/boardRepo?min=0&max=10000"
+    validModifiers = ["watchermode"]
+    validCats = ["survivor", "monk", "hunter", "gourmand", "artificer", "spearmaster", "rivulet", "saint", "watcher"]
+    if (cat.lower() not in validCats):
+      await ctx.reply(f"Fake cat, try again")
+      return
+    if (modifier and modifier.lower() not in validModifiers):
+      await ctx.reply(f"Fake modifier, try again")
+      return
+
+    if (cat.lower() == "watcher"):
+      modifier = "watchermode"
+    
+    start = time.perf_counter()
+    async with aiohttp.ClientSession() as session:
+      async with session.get(API_URL) as response:
+        data = await response.json()
+
+    elapsed = time.perf_counter() - start
+    boards = data["boards"]
+
+    acceptableBoards = []
+
+    for entry in boards:
+      info = entry["info"]
+
+      if info["character"]["stringValue"].lower() != cat.lower():
+        continue
+
+      is_watcher_mode = info["watcherMode"]["booleanValue"]
+
+      if modifier and modifier.lower() == "watchermode":
+        if not is_watcher_mode:
+          continue
+      else:
+        if is_watcher_mode:
+          continue
+
+      acceptableBoards.append(info["boardString"]["stringValue"])
+
+    if len(acceptableBoards) == 0:
+      await ctx.reply(f"Couldn't find a board to match!")
+      return
+
+    board = random.choice(acceptableBoards)
+
+    file = discord.File(
+      io.BytesIO(board.encode("utf-8")),
+      filename="board.txt"
+    )
+
+    embed = discord.Embed(title="Random Bingo Board:", color=0xF5BDE6, 
+      description=f"""
+      {f"Phew <:ArtiBoom:1492954504226934984>, the API took {elapsed:.3f} seconds!" if elapsed > 5 else ""}\n
+      For {cat} {"Watcher Mode" if modifier and modifier.lower() == "watchermode" else "no modifier"} we chose:""")
+    await ctx.reply(embed=embed)
+    await ctx.send(file=file)
 
 
   @commands.command()
@@ -57,7 +120,6 @@ class Cog(commands.Cog):
 
     player = None
 
-    print(name)
     for entry in users:
         info = entry["info"]
 
@@ -66,7 +128,7 @@ class Cog(commands.Cog):
             break
 
     if player is None:
-        await ctx.send(f"Could not find player `{name}`.")
+        await ctx.reply(f"Can't find `{name}`.")
         return
 
     embed = discord.Embed(
@@ -103,7 +165,7 @@ class Cog(commands.Cog):
 
     embed.url = f"https://greatgamedota.github.io/rw-bingo-board-viewer/user/{quote(name)}"
 
-    await ctx.send(embed=embed)
+    await ctx.reply(embed=embed)
 
   @commands.Cog.listener()
   async def on_member_update(self, before: Member, after: Member):
@@ -143,3 +205,9 @@ class Cog(commands.Cog):
     if vol_role in before.roles and vol_role not in after.roles:
       await self.bot.get_channel(1155699597960818698).send(f"# Volunteer role was removed for \n<@{after.id}>. Added Previous Volunteer")
       await after.add_roles(pre_vol_role)
+
+  @commands.Cog.listener()
+  async def on_command_error(self, ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+      embed = discord.Embed(color=0xF5BDE6, title="Unknown Command!", description=f".{ctx.invoked_with}? We've never heard of that one <:HSniff:1371596628984598599>")
+      await ctx.reply(embed=embed)
