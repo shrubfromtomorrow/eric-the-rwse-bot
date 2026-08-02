@@ -48,7 +48,7 @@ class Cog(commands.Cog):
   @commands.command()
   @commands.guild_only()
   async def bingoboard(self, ctx: commands.Context, cat: str, modifier: str = None):
-    API_URL = "https://us-central1-bingo-db-57e75.cloudfunctions.net/api/boardRepo?min=0&max=10000"
+    API_URL = "https://us-central1-bingo-db-57e75.cloudfunctions.net/api/boardRepo/search"
     validModifiers = ["watchermode"]
     validCats = ["survivor", "monk", "hunter", "gourmand", "artificer", "spearmaster", "rivulet", "saint", "watcher"]
     if (cat.lower() not in validCats):
@@ -60,10 +60,18 @@ class Cog(commands.Cog):
 
     if (cat.lower() == "watcher"):
       modifier = "watchermode"
+
+
+    payload = {
+      "character": cat.capitalize()
+    }
+
+    if modifier and modifier.lower() == "watchermode":
+      payload["watcherMode"] = True
     
     start = time.perf_counter()
     async with aiohttp.ClientSession() as session:
-      async with session.get(API_URL) as response:
+      async with session.post(API_URL, json=payload) as response:
         data = await response.json()
 
     elapsed = time.perf_counter() - start
@@ -73,19 +81,6 @@ class Cog(commands.Cog):
 
     for entry in boards:
       info = entry["info"]
-
-      if info["character"]["stringValue"].lower() != cat.lower():
-        continue
-
-      is_watcher_mode = info["watcherMode"]["booleanValue"]
-
-      if modifier and modifier.lower() == "watchermode":
-        if not is_watcher_mode:
-          continue
-      else:
-        if is_watcher_mode:
-          continue
-
       acceptableBoards.append(info["boardString"]["stringValue"])
 
     if len(acceptableBoards) == 0:
@@ -102,7 +97,7 @@ class Cog(commands.Cog):
     embed = discord.Embed(title="Random Bingo Board:", color=0xF5BDE6, 
       description=f"""
       {f"Phew <:ArtiBoom:1492954504226934984>, the API took {elapsed:.3f} seconds!" if elapsed > 5 else ""}\n
-      For {cat} {"Watcher Mode" if modifier and modifier.lower() == "watchermode" else "no modifier"} we chose:""")
+      For {cat.capitalize()} {"Watcher Mode" if modifier and modifier.lower() == "watchermode" else "no modifier"} we choose:""")
     await ctx.reply(embed=embed)
     await ctx.send(file=file)
 
@@ -110,7 +105,7 @@ class Cog(commands.Cog):
   @commands.command()
   @commands.guild_only()
   async def bingoplayer(self, ctx: commands.Context, *, name: str):
-    API_URL = "https://us-central1-bingo-db-57e75.cloudfunctions.net/api/users"
+    API_URL = "https://us-central1-bingo-db-57e75.cloudfunctions.net/api/users?min=0&max=10000"
 
     async with aiohttp.ClientSession() as session:
         async with session.get(API_URL) as response:
