@@ -23,9 +23,11 @@ class Cog(commands.Cog):
     await ctx.reply(embed=embed)
 
 
-  @commands.command()
+  @commands.command(aliases=['randomslug'])
   @commands.guild_only()
   async def bingoslug(self, ctx: commands.Context):
+    if ctx.invoked_with != ctx.command.name:
+      await ctx.send(f"You used `{ctx.invoked_with}`, but we know what you meant :)")
     slugs = {"Monk": "https://static.wikitide.net/rainworldwiki/3/37/Monk_select_screen_layer.png", 
              "Survivor": "https://static.wikitide.net/rainworldwiki/6/64/Survivor_select_screen_layer.png", 
              "Hunter": "https://static.wikitide.net/rainworldwiki/7/7d/Hunter_select_screen_layer.png", 
@@ -45,9 +47,11 @@ class Cog(commands.Cog):
     
     await ctx.reply(embed=embed)
 
-  @commands.command()
+  @commands.command(aliases=['bingboard'])
   @commands.guild_only()
   async def bingoboard(self, ctx: commands.Context, cat: str, modifier: str = None):
+    if ctx.invoked_with != ctx.command.name:
+      await ctx.send(f"You used `{ctx.invoked_with}`, but we know what you meant :)")
     API_URL = "https://us-central1-bingo-db-57e75.cloudfunctions.net/api/boardRepo/search"
     validModifiers = ["watchermode"]
     validCats = ["survivor", "monk", "hunter", "gourmand", "artificer", "spearmaster", "rivulet", "saint", "watcher"]
