@@ -91,7 +91,7 @@ class Cog(commands.Cog):
     await ctx.respond(content=message)
     vol_planning = self.bot.get_channel(VOL_PLANNING_ID)
     await vol_planning.send(content=(
-      f"<@733701592582324245>\n\n"
+      f"<@{VOL_PING_ID}>\n\n"
       f"{message}\n\n"
       f"<:pupred:1345545008555626657> for Game Master\n"
       f"<:puppink:1345545006617989273> for Stream Tech\n"
