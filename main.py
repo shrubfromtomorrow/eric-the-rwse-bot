@@ -31,7 +31,7 @@ load_dotenv()
 # 
 # IF YOU NEED A PERSISTENT DATABASE
 
-bot = commands.Bot(command_prefix='.', intents=intents)
+bot = commands.Bot(command_prefix='.', intents=intents, debug_guilds=[995807773138890853])
 bot.remove_command('help')
 bot.add_cog(Cog(bot))
 # IF YOU NEED A PERSISTENT DATABASE
@@ -93,7 +93,7 @@ async def on_ready():
   embed = discord.Embed(title='Alive!', color=0xF5BDE6, description=f"""
 Awake! Our prefix is `{bot.command_prefix}` 
 Our latency: `{round(bot.latency * 1000)}` ms""")
-
+  
   await settings_channel.send(embed=embed)
   
 

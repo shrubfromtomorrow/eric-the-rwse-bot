@@ -9,6 +9,12 @@ import random
 from urllib.parse import quote
 import io
 import time
+from b7teams import TEAMS
+import re
+
+MATCH_PLANNING_ID = 1514948806452580452
+VOL_PLANNING_ID = 1513612410991280159
+VOL_PING_ID = 1513614120589590719
 
 class Cog(commands.Cog):
   def __init__(self, bot: Bot):
@@ -21,6 +27,118 @@ class Cog(commands.Cog):
     embed = discord.Embed(title='Boo!', color=0xF5BDE6, description=f"""
     Our latency is: {latency_ms:.2f}ms""")
     await ctx.reply(embed=embed)
+    
+    
+  async def title_autocomplete(
+      self,
+      ctx: discord.AutocompleteContext,
+    ):
+      current = ctx.value.lower()
+  
+      return [
+          team
+          for team in TEAMS.keys()
+          if current in team.lower()
+      ][:25]
+    
+  def format_team(self, team_name):
+    team = TEAMS[team_name]
+    return (
+        f"{team_name} "
+        f"<:{team_name.replace(' ', '')}:{team['emoji']}> "
+        f"<@{team['player1']}> "
+        f"<@{team['player2']}>"
+    )
+    
+  @discord.slash_command(description="Schedule a Bingo 7 match")
+  async def b7_schedule(
+    self,
+    ctx: discord.ApplicationContext,
+    team1: str = discord.Option(
+      description="Team 1",
+      autocomplete=title_autocomplete,
+    ),
+    team2: str = discord.Option(
+      description="Team 2",
+      autocomplete=title_autocomplete,
+    ),
+    timestamp: str = discord.Option(
+      description="Timestamp (e.g. <t:1785754801:F>)",
+    ),
+  ):
+    if ctx.channel.id != MATCH_PLANNING_ID:
+      await ctx.respond(
+        f"This command can only be used in <#{MATCH_PLANNING_ID}>",
+        ephemeral=True,
+      )
+      return
+    
+    match = re.match(r"<t:(\d+)(?::[a-zA-Z])?>", timestamp)
+
+    if not match:
+        await ctx.respond(
+            "Invalid timestamp format. Use something like `<t:1785754801:F>`.",
+            ephemeral=True,
+        )
+        return
+
+    unix_timestamp = int(match.group(1))
+
+    if random.choice([True, False]):
+      team1, team2 = team2, team1
+      
+    message = f"{self.format_team(team1)}\n" f"vs\n" f"{self.format_team(team2)}\n\n" f"<t:{unix_timestamp}:F>"
+    await ctx.respond(content=message)
+    vol_planning = self.bot.get_channel(VOL_PLANNING_ID)
+    await vol_planning.send(content=(
+      f"<@733701592582324245>\n\n"
+      f"{message}\n\n"
+      f"<:pupred:1345545008555626657> for Game Master\n"
+      f"<:puppink:1345545006617989273> for Stream Tech\n"
+      f"<:pupblue:1345545011206553642> for Commentary\n"
+      f"<:pupgreen:1345544997012897903> for Stat Tracker"
+    ))
+  
+    
+  @discord.slash_command(description="Change a scheduled Bingo 7 match")
+  async def b7_schedule_change(
+    self,
+    ctx: discord.ApplicationContext,
+    message_id: str = discord.Option(
+      description="Scheduled message ID, click the 3 dots on the message, it's at the bottom"
+    ),
+    action: str = discord.Option(
+      description="change time or cancel",
+      choices=["change", "cancel"]
+    ),
+    timestamp: str = discord.Option(
+      default=None,
+      description="New timestamp"
+    ),
+  ):
+    try:
+      message = await ctx.channel.fetch_message(int(message_id))
+    except discord.NotFound:
+      await ctx.respond(
+        "Could not find that message in this channel.",
+        ephemeral=True,
+      )
+      return
+
+    if action == "cancel":
+      await message.edit(
+        content=f"~~{message.content}~~\n\n**Cancelled**"
+      )
+
+    elif action == "change":
+      match = re.match(r"<t:(\d+)(?::[a-zA-Z])?>", timestamp)
+      unix_timestamp = int(match.group(1))
+      await message.edit(
+        content=message.content.rsplit("\n\n", 1)[0]
+          + f"\n\n<t:{unix_timestamp}:F>"
+        )
+      
+    await ctx.respond("Updated", ephemeral=True)
 
 
   @commands.command(aliases=['randomslug'])
