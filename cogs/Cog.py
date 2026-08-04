@@ -90,14 +90,18 @@ class Cog(commands.Cog):
     message = f"{self.format_team(team1)}\n" f"vs\n" f"{self.format_team(team2)}\n\n" f"<t:{unix_timestamp}:F>"
     await ctx.respond(content=message)
     vol_planning = self.bot.get_channel(VOL_PLANNING_ID)
-    await vol_planning.send(content=(
-      f"<@{VOL_PING_ID}>\n\n"
+    sent = await vol_planning.send(content=(
+      f"<@&{VOL_PING_ID}>\n\n"
       f"{message}\n\n"
       f"<:pupred:1345545008555626657> for Game Master\n"
       f"<:puppink:1345545006617989273> for Stream Tech\n"
       f"<:pupblue:1345545011206553642> for Commentary\n"
       f"<:pupgreen:1345544997012897903> for Stat Tracker"
     ))
+    await sent.add_reaction("<:pupred:1345545008555626657>")
+    await sent.add_reaction("<:puppink:1345545006617989273>")
+    await sent.add_reaction("<:pupblue:1345545011206553642>")
+    await sent.add_reaction("<:pupgreen:1345544997012897903>")
   
     
   @discord.slash_command(description="Change a scheduled Bingo 7 match")
