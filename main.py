@@ -87,12 +87,17 @@ async def on_ready():
   print(f"Logged in as {bot.user} ({bot.user.id})")
   for guild in bot.guilds:
     print(guild.name, guild.id)
+    
+  await bot.change_presence(
+    status=discord.Status.online, 
+    activity=discord.Activity(type=discord.ActivityType.playing, name="Violently fighting in a 1v1 bingo")
+  )
 
   settings_channel = await bot.fetch_channel(1155699597960818698)
   
   embed = discord.Embed(title='Alive!', color=0xF5BDE6, description=f"""
 Awake! Our prefix is `{bot.command_prefix}` 
-Our latency: `{round(bot.latency * 1000)}` ms""")
+Our latency: `{(bot.latency * 1000):.2f}` ms""")
   
   await settings_channel.send(embed=embed)
   
