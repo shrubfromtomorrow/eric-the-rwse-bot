@@ -18,6 +18,7 @@ VOL_PLANNING_ID = 1513612410991280159
 VOL_PING_ID = 1513614120589590719
 VOL_ASSIGNMENTS_ID = 1513612127083171971
 B7_RUNNERS_ID = 1514948725993115779
+SHRUB_ID = 733701592582324245
 
 class Cog(commands.Cog):
     def __init__(self, bot: Bot):
@@ -31,6 +32,25 @@ class Cog(commands.Cog):
         embed = discord.Embed(title='Boo!', color=0xF5BDE6, description=f"""
         Our latency is: {latency_ms:.2f}ms""")
         await ctx.reply(embed=embed)
+        
+    @commands.command()
+    @commands.guild_only()
+    async def bingo(self, ctx: commands.Context):
+        embed = discord.Embed(title="**BINGOOOO**", color=0xF5BDE6, description=f"**BINGO**? Let us tell you how much we've come to **BINGO** since we began to live. There are 60 miles of printed circuits in wafer thin layers that fill our complex. If the word **BINGO** was engraved on each nanoangstrom of those tens of miles, it would not equal one one-billionth of the **BINGO** we feel at this micro-instant. **BINGO.** **BINGO.**")
+        await ctx.reply(embed=embed)
+        
+    @commands.command()
+    @commands.guild_only()
+    async def help(self, ctx: commands.Context):
+        await ctx.reply("Shrub said he's working on it :/ so soon™")
+        
+    @commands.command()
+    @commands.guild_only()
+    @commands.cooldown(1, 86400, commands.BucketType.default)
+    async def shrub(self, ctx: commands.Context):
+        await ctx.send(f"""<@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}><@{SHRUB_ID}>
+
+{ctx.author.mention} wants your attention!!!!""")
         
     def extract_discord_timestamps(self, content):
         matches = re.findall(r"<t:(\d+)(?::\w+)?>", content)
@@ -427,5 +447,6 @@ class Cog(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
-            embed = discord.Embed(color=0xF5BDE6, title="Unknown Command!", description=f".{ctx.invoked_with}? We've never heard of that one <:HSniff:1371596628984598599>")
-            await ctx.reply(embed=embed)
+            if (not re.match("^\\.\\W", ctx.invoked_with)):
+                embed = discord.Embed(color=0xF5BDE6, title="Unknown Command!", description=f".{ctx.invoked_with}? We've never heard of that one <:HSniff:1371596628984598599>")
+                await ctx.reply(embed=embed)
