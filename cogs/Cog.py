@@ -123,9 +123,10 @@ class Cog(commands.Cog):
                         f"(<t:{unix_ts}:F>)"
                     )
 
-                    await b7_runners_channel.send(text)
+                    sent = await b7_runners_channel.send(text)
 
                     await message.add_reaction("✅") # fuckin unicode in my code am I johngpt
+                    await sent.add_reaction("<:saintyoy:1166185013847523378>")
                     
                     break
         
