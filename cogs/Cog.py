@@ -30,7 +30,7 @@ class Cog(commands.Cog):
     async def ping(self, ctx: commands.Context):
         latency_ms = self.bot.latency * 1000
         embed = discord.Embed(title='Boo!', color=0xF5BDE6, description=f"""
-        Our latency is: {latency_ms:.2f}ms""")
+        Our latency is: `{latency_ms:.2f}`ms""")
         await ctx.reply(embed=embed)
         
     @commands.command()
@@ -367,7 +367,7 @@ class Cog(commands.Cog):
                         break
 
         if player is None:
-                await ctx.reply(f"Can't find `{name}`.")
+                await ctx.reply(f"Can't find `{name}`")
                 return
 
         embed = discord.Embed(
@@ -392,7 +392,7 @@ class Cog(commands.Cog):
 
         embed.add_field(
             name="Winrate",
-            value=f"{round(wins/totalGames, 2):.0%}",
+            value=f"{round((wins / totalGames if totalGames else 0), 2):.0%}",
             inline=True
         )
 
