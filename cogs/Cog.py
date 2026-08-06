@@ -351,9 +351,10 @@ class Cog(commands.Cog):
     async def bingoplayer(self, ctx: commands.Context, *, name: str):
         API_URL = "https://us-central1-bingo-db-57e75.cloudfunctions.net/api/users?min=0&max=10000"
 
-        async with aiohttp.ClientSession() as session:
-                async with session.get(API_URL) as response:
-                        data = await response.json()
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as session:
+                    async with session.get(API_URL) as response:
+                            data = await response.json()
     
         users = data["users"]
 
