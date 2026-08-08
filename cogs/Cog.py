@@ -268,12 +268,12 @@ class Cog(commands.Cog):
                 
             mentions = " ".join(user.mention for user in reactors.values())
             vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
-            message = f"""## MATCH CANCELLED
+            message2 = f"""## MATCH CANCELLED
 For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
 ({mentions})
 Please note that this match has been **CANCELLED!**"""
 
-            await vol_general_channel.send(message)
+            await vol_general_channel.send(message2)
             
 
         elif action == "change":
