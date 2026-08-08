@@ -16,6 +16,7 @@ import re
 MATCH_PLANNING_ID = 1514948806452580452
 VOL_PLANNING_ID = 1513612410991280159
 VOL_PING_ID = 1513614120589590719
+VOL_GENERAL_ID = 1513230238388195518
 VOL_ASSIGNMENTS_ID = 1513612127083171971
 B7_RUNNERS_ID = 1514948725993115779
 SHRUB_ID = 733701592582324245
@@ -52,20 +53,16 @@ class Cog(commands.Cog):
 
 {ctx.author.mention} wants your attention!!!!""")
         
-    def extract_discord_timestamps(self, content):
-        matches = re.findall(r"<t:(\d+)(?::\w+)?>", content)
+    def extract_discord_timestamp(self, content):
+        match = re.search(r"<t:(\d+)(?::\w+)?>", content)
+        
+        if not match:
+            return None
+        
+        return datetime.fromtimestamp(int(match.group(1)), tz=timezone.utc)
 
-        timestamps = []
-
-        for unix_time in matches:
-            timestamps.append(
-                datetime.fromtimestamp(
-                    int(unix_time),
-                    tz=timezone.utc
-                )
-            )
-
-        return timestamps
+    def discord_timestamp(self, dt, style="F"):
+        return f"<t:{int(dt.timestamp())}:{style}>"
         
     async def has_bot_check(self, message):
         for reaction in message.reactions:
@@ -95,40 +92,38 @@ class Cog(commands.Cog):
             if await self.has_bot_check(message):
                 continue
 
-            timestamps = self.extract_discord_timestamps(message.content)
+            timestamp = self.extract_discord_timestamp(message.content)
 
-            for timestamp in timestamps:
+            if now <= timestamp <= cutoff:
+                unix_ts = int(timestamp.timestamp())
+                mention_ids = re.findall(r"<@!?(\d+)>", message.content)
+                members = []
+                for user_id in mention_ids:
+                    member = message.guild.get_member(int(user_id))
+                    if member:
+                        members.append(member)
+                players = members[:4]
+                volunteers = members[4:]
+                player_mentions = " ".join(member.mention for member in players)
+                volunteer_mentions = " ".join(member.mention for member in volunteers)
+                text = ""
+                if player_mentions:
+                    text += f"**Players:** {player_mentions}\n"
 
-                if now <= timestamp <= cutoff:
-                    unix_ts = int(timestamp.timestamp())
-                    mention_ids = re.findall(r"<@!?(\d+)>", message.content)
-                    members = []
-                    for user_id in mention_ids:
-                        member = message.guild.get_member(int(user_id))
-                        if member:
-                            members.append(member)
-                    players = members[:4]
-                    volunteers = members[4:]
-                    player_mentions = " ".join(member.mention for member in players)
-                    volunteer_mentions = " ".join(member.mention for member in volunteers)
-                    text = ""
-                    if player_mentions:
-                        text += f"**Players:** {player_mentions}\n"
+                if volunteer_mentions:
+                    text += f"**Volunteers:** {volunteer_mentions}\n"
 
-                    if volunteer_mentions:
-                        text += f"**Volunteers:** {volunteer_mentions}\n"
+                text += (
+                    f"\nReminder for your match <t:{unix_ts}:R>\n"
+                    f"(<t:{unix_ts}:F>)"
+                )
 
-                    text += (
-                        f"\nReminder for your match <t:{unix_ts}:R>\n"
-                        f"(<t:{unix_ts}:F>)"
-                    )
+                sent = await b7_runners_channel.send(text)
 
-                    sent = await b7_runners_channel.send(text)
-
-                    await message.add_reaction("✅") # fuckin unicode in my code am I johngpt
-                    await sent.add_reaction("<:saintyoy:1166185013847523378>")
-                    
-                    break
+                await message.add_reaction("✅") # fuckin unicode in my code am I johngpt
+                await sent.add_reaction("<:saintyoy:1166185013847523378>")
+                
+                break
         
     @scan_vol_assign.before_loop
     async def before_scan_vol_assign(self):
@@ -237,19 +232,49 @@ class Cog(commands.Cog):
             description="New timestamp"
         ),
     ):
+        await ctx.defer(ephemeral=True)
         try:
-            message = await ctx.channel.fetch_message(int(message_id))
+            match_planning_message = await ctx.channel.fetch_message(int(message_id))
         except discord.NotFound:
-            await ctx.respond(
+            await ctx.followup.send(
                 "Could not find that message in this channel.",
                 ephemeral=True,
             )
             return
 
         if action == "cancel":
-            await message.edit(
-                content=f"~~{message.content}~~\n\n**Cancelled**"
+            await match_planning_message.edit(
+                content=f"~~{match_planning_message.content}~~\n\n**Cancelled**"
             )
+            emoji_ids = {
+                1345545008555626657,  # pupred
+                1345545006617989273,  # puppink
+                1345545011206553642,  # pupblue
+                1345544997012897903,  # pupgreen
+            }
+            
+            match_planning_timestamp = self.extract_discord_timestamp(match_planning_message.content)
+            vol_planning_channel = self.bot.get_channel(VOL_PLANNING_ID)
+            reactors = {}
+            async for message in vol_planning_channel.history(limit=40):
+                vol_planning_timestamp = self.extract_discord_timestamp(message.content)
+                if vol_planning_timestamp == match_planning_timestamp:
+                    for reaction in message.reactions:
+                        if reaction.emoji.id in emoji_ids:
+                            async for user in reaction.users():
+                                if user.id != self.bot.user.id:
+                                    reactors[user.id] = user
+                    break
+                
+            mentions = " ".join(user.mention for user in reactors.values())
+            vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
+            message = f"""## MATCH CANCELLED
+For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
+({mentions})
+Please note that this match has been **CANCELLED!**"""
+
+            await vol_general_channel.send(message)
+            
 
         elif action == "change":
             match = re.match(r"<t:(\d+)(?::[a-zA-Z])?>", timestamp)
@@ -259,7 +284,7 @@ class Cog(commands.Cog):
                     + f"\n\n<t:{unix_timestamp}:F>"
                 )
             
-        await ctx.respond("Updated", ephemeral=True)
+        await ctx.followup.send("Updated", ephemeral=True)
 
 
     @commands.command(aliases=['randomslug'])
