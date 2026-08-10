@@ -188,13 +188,20 @@ class Cog(commands.Cog):
         match = re.match(r"<t:(\d+)(?::[a-zA-Z])?>", timestamp)
 
         if not match:
-                await ctx.respond(
-                        "Invalid timestamp format. Use something like `<t:1785754801:F>`.",
-                        ephemeral=True,
-                )
-                return
+            await ctx.respond(
+                    "Invalid timestamp format. Use something like `<t:1785754801:F>`.",
+                    ephemeral=True,
+            )
+            return
 
         unix_timestamp = int(match.group(1))
+        
+        if (unix_timestamp - time.time() < (24 * 60 * 60)):
+            await ctx.respond(
+                    f"We cannot schedule a match for <t:{unix_timestamp}:F> as it is less than 24 hours away!",
+                    ephemeral=True,
+            )
+            return
 
         if random.choice([True, False]):
             team1, team2 = team2, team1
