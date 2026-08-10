@@ -242,45 +242,52 @@ class Cog(commands.Cog):
             )
             return
 
+        if match_planning_message.author.id != self.bot.user.id:
+            await ctx.followup.send(
+                "We can't edit that message because it wasn't sent by us.",
+                ephemeral=True,
+            )
+            return
+
         if action == "cancel":
             await match_planning_message.edit(
                 content=f"~~{match_planning_message.content}~~\n\n**Cancelled**"
             )
-            emoji_ids = {
-                1345545008555626657,  # pupred
-                1345545006617989273,  # puppink
-                1345545011206553642,  # pupblue
-                1345544997012897903,  # pupgreen
-            }
+#             emoji_ids = {
+#                 1345545008555626657,  # pupred
+#                 1345545006617989273,  # puppink
+#                 1345545011206553642,  # pupblue
+#                 1345544997012897903,  # pupgreen
+#             }
             
-            match_planning_timestamp = self.extract_discord_timestamp(match_planning_message.content)
-            vol_planning_channel = self.bot.get_channel(VOL_PLANNING_ID)
-            reactors = {}
-            async for message in vol_planning_channel.history(limit=40):
-                vol_planning_timestamp = self.extract_discord_timestamp(message.content)
-                if vol_planning_timestamp == match_planning_timestamp:
-                    for reaction in message.reactions:
-                        if reaction.emoji.id in emoji_ids:
-                            async for user in reaction.users():
-                                if user.id != self.bot.user.id:
-                                    reactors[user.id] = user
-                    break
+#             match_planning_timestamp = self.extract_discord_timestamp(match_planning_message.content)
+#             vol_planning_channel = self.bot.get_channel(VOL_PLANNING_ID)
+#             reactors = {}
+#             async for message in vol_planning_channel.history(limit=40):
+#                 vol_planning_timestamp = self.extract_discord_timestamp(message.content)
+#                 if vol_planning_timestamp == match_planning_timestamp:
+#                     for reaction in message.reactions:
+#                         if reaction.emoji.id in emoji_ids:
+#                             async for user in reaction.users():
+#                                 if user.id != self.bot.user.id:
+#                                     reactors[user.id] = user
+#                     break
                 
-            mentions = " ".join(user.mention for user in reactors.values())
-            vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
-            message2 = f"""## MATCH CANCELLED
-For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
-({mentions})
-Please note that this match has been **CANCELLED!**"""
+#             mentions = " ".join(user.mention for user in reactors.values())
+#             vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
+#             message2 = f"""## MATCH CANCELLED
+# For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
+# ({mentions})
+# Please note that this match has been **CANCELLED!**"""
 
-            await vol_general_channel.send(message2)
+#             await vol_general_channel.send(message2)
             
 
         elif action == "change":
             match = re.match(r"<t:(\d+)(?::[a-zA-Z])?>", timestamp)
             unix_timestamp = int(match.group(1))
-            await message.edit(
-                content=message.content.rsplit("\n\n", 1)[0]
+            await match_planning_message.edit(
+                content=match_planning_message.content.rsplit("\n\n", 1)[0]
                     + f"\n\n<t:{unix_timestamp}:F>"
                 )
             
@@ -473,7 +480,7 @@ Please note that this match has been **CANCELLED!**"""
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandNotFound):
-            if (not re.match("^\\.\\W", ctx.invoked_with)):
-                embed = discord.Embed(color=0xF5BDE6, title="Unknown Command!", description=f".{ctx.invoked_with}? We've never heard of that one <:HSniff:1371596628984598599>")
-                await ctx.reply(embed=embed)
+        print(repr(ctx.invoked_with))
+        if isinstance(error, commands.CommandNotFound) and ctx.invoked_with.isalpha():
+            embed = discord.Embed(color=0xF5BDE6, title="Unknown Command!", description=f".{ctx.invoked_with}? We've never heard of that one <:HSniff:1371596628984598599>")
+            await ctx.reply(embed=embed)
