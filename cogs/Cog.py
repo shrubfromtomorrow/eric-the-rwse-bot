@@ -140,6 +140,78 @@ class Cog(commands.Cog):
             await ctx.reply("No VOD found.")
         else:
             await ctx.reply(url)
+            
+    
+    @discord.slash_command(description="Edit an Eric message timestamp")
+    @commands.check(
+        lambda ctx: any(
+            role.id in {
+                1434849006734807080, #b7 staff
+                995814248003403837 #mod
+            }
+            for role in ctx.author.roles
+        )
+    )
+    async def eric_timestamp_edit(
+        self,
+        ctx: discord.ApplicationContext,
+        message_id: str = discord.Option(
+            description="Scheduled message ID, click the 3 dots on the message, it's at the bottom"
+        ),
+        timestamp: str = discord.Option(
+            description="Timestamp (e.g. <t:1785754801:F>)",
+        ),
+        
+    ):
+        await ctx.defer(ephemeral=True)
+        try:
+            message = await ctx.channel.fetch_message(int(message_id))
+        except discord.NotFound:
+            await ctx.respond(
+                "We couldn't find that message in this channel. Use this command in the channel the message exists in.",
+                ephemeral=True
+            )
+            return
+        except ValueError:
+            await ctx.respond(
+                "That isn't a valid message ID.",
+                ephemeral=True
+            )
+            return
+
+        if message.author.id != self.bot.user.id:
+            await ctx.respond(
+                "That message wasn't sent by us, we can't edit it.",
+                ephemeral=True
+            )
+            return
+        
+        match = re.match(r"<t:(\d+)(?::[a-zA-Z])?>", timestamp)
+        unix_timestamp = int(match.group(1))
+
+        new_timestamp = f"<t:{unix_timestamp}:F>"
+
+        await message.edit(
+            content=re.sub(
+                r"<t:\d+(?::[a-zA-Z])?>",
+                new_timestamp,
+                message.content,
+                count=1
+            )
+        )
+        await ctx.followup.send("Updated", ephemeral=True)
+    
+    @eric_timestamp_edit.error
+    async def eric_timestamp_edit_error(
+        self,
+        ctx: discord.ApplicationContext,
+        error
+    ):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.respond(
+                "You don't have the required role to use this command.",
+                ephemeral=True
+            )
         
     async def title_autocomplete(
             self,
@@ -210,7 +282,7 @@ class Cog(commands.Cog):
         await ctx.respond(content=message)
         vol_planning = self.bot.get_channel(VOL_PLANNING_ID)
         sent = await vol_planning.send(content=(
-            f"<@&{VOL_PING_ID}>\n\n"
+            f"<@&{0}>\n\n"
             f"{message}\n\n"
             f"<:pupred:1345545008555626657> for Game Master\n"
             f"<:puppink:1345545006617989273> for Stream Tech\n"
@@ -255,49 +327,81 @@ class Cog(commands.Cog):
                 ephemeral=True,
             )
             return
+        
+        emoji_ids = {
+            1345545008555626657,  # pupred
+            1345545006617989273,  # puppink
+            1345545011206553642,  # pupblue
+            1345544997012897903,  # pupgreen
+        }
+        
+        vol_planning_message = None
+        reactors = {}
+        match_planning_timestamp = self.extract_discord_timestamp(match_planning_message.content)
+        vol_planning_channel = self.bot.get_channel(VOL_PLANNING_ID)
+        async for message in vol_planning_channel.history(limit=40):
+            vol_planning_timestamp = self.extract_discord_timestamp(message.content)
+            if vol_planning_timestamp == match_planning_timestamp:
+                vol_planning_message = message
+                for reaction in message.reactions:
+                    if reaction.emoji.id in emoji_ids:
+                        async for user in reaction.users():
+                            if user.id != self.bot.user.id:
+                                reactors[user.id] = user
+                break
+        mentions = " ".join(user.mention for user in reactors.values())
 
         if action == "cancel":
             await match_planning_message.edit(
                 content=f"~~{match_planning_message.content}~~\n\n**Cancelled**"
             )
-#             emoji_ids = {
-#                 1345545008555626657,  # pupred
-#                 1345545006617989273,  # puppink
-#                 1345545011206553642,  # pupblue
-#                 1345544997012897903,  # pupgreen
-#             }
-            
-#             match_planning_timestamp = self.extract_discord_timestamp(match_planning_message.content)
-#             vol_planning_channel = self.bot.get_channel(VOL_PLANNING_ID)
-#             reactors = {}
-#             async for message in vol_planning_channel.history(limit=40):
-#                 vol_planning_timestamp = self.extract_discord_timestamp(message.content)
-#                 if vol_planning_timestamp == match_planning_timestamp:
-#                     for reaction in message.reactions:
-#                         if reaction.emoji.id in emoji_ids:
-#                             async for user in reaction.users():
-#                                 if user.id != self.bot.user.id:
-#                                     reactors[user.id] = user
-#                     break
+            if vol_planning_message.author.id == self.bot.user.id:
+                await vol_planning_message.edit(
+                    content=f"~~{match_planning_message.content}~~\n\n**Cancelled**"
+                )
                 
-#             mentions = " ".join(user.mention for user in reactors.values())
-#             vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
-#             message2 = f"""## MATCH CANCELLED
-# For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
-# ({mentions})
-# Please note that this match has been **CANCELLED!**"""
+            vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
+            vol_cancel_warning_message = f"""## MATCH CANCELLED
+For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
+({mentions})
+Please note that this match has been **CANCELLED!**"""
 
-#             await vol_general_channel.send(message2)
+            await vol_general_channel.send(vol_cancel_warning_message)
             
 
         elif action == "change":
             match = re.match(r"<t:(\d+)(?::[a-zA-Z])?>", timestamp)
             unix_timestamp = int(match.group(1))
+
+            new_timestamp = f"<t:{unix_timestamp}:F>"
+
             await match_planning_message.edit(
-                content=match_planning_message.content.rsplit("\n\n", 1)[0]
-                    + f"\n\n<t:{unix_timestamp}:F>"
+                content=re.sub(
+                    r"<t:\d+(?::[a-zA-Z])?>",
+                    new_timestamp,
+                    match_planning_message.content,
+                    count=1
+                )
+            )
+
+            if vol_planning_message.author.id == self.bot.user.id:
+                await vol_planning_message.edit(
+                    content=re.sub(
+                        r"<t:\d+(?::[a-zA-Z])?>",
+                        new_timestamp,
+                        vol_planning_message.content,
+                        count=1
+                    )
                 )
             
+            vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
+            vol_cancel_warning_message = f"""## MATCH TIME UPDATED
+For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
+({mentions})
+Please note that this match has had its time **UPDATED!**"""
+
+            await vol_general_channel.send(vol_cancel_warning_message)
+
         await ctx.followup.send("Updated", ephemeral=True)
 
 
