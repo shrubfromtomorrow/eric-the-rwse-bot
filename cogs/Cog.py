@@ -140,7 +140,65 @@ class Cog(commands.Cog):
             await ctx.reply("No VOD found.")
         else:
             await ctx.reply(url)
-            
+    
+    @discord.slash_command(description="Cancel an Eric message")
+    @commands.check(
+        lambda ctx: any(
+            role.id in {
+                1434849006734807080, #b7 staff
+                995814248003403837 #mod
+            }
+            for role in ctx.author.roles
+        )
+    )
+    async def eric_timestamp_cancel(
+        self,
+        ctx: discord.ApplicationContext,
+        message_id: str = discord.Option(
+            description="Scheduled message ID, click the 3 dots on the message, it's at the bottom"
+        ),
+    ):
+        await ctx.defer(ephemeral=True)
+        try:
+            message = await ctx.channel.fetch_message(int(message_id))
+        except discord.NotFound:
+            await ctx.respond(
+                "We couldn't find that message in this channel. Use this command in the channel the message exists in.",
+                ephemeral=True
+            )
+            return
+        except ValueError:
+            await ctx.respond(
+                "That isn't a valid message ID.",
+                ephemeral=True
+            )
+            return
+
+        if message.author.id != self.bot.user.id:
+            await ctx.respond(
+                "That message wasn't sent by us, we can't edit it.",
+                ephemeral=True
+            )
+            return
+        
+        await message.edit(
+            content=f"~~{message.content}~~\n\n**Cancelled**"
+        )
+        
+        await ctx.followup.send("Updated", ephemeral=True)
+        
+    @eric_timestamp_cancel.error
+    async def eric_timestamp_edit_error(
+        self,
+        ctx: discord.ApplicationContext,
+        error
+    ):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.respond(
+                "You don't have the required role to use this command.",
+                ephemeral=True
+            )
+
     
     @discord.slash_command(description="Edit an Eric message timestamp")
     @commands.check(
@@ -282,7 +340,7 @@ class Cog(commands.Cog):
         await ctx.respond(content=message)
         vol_planning = self.bot.get_channel(VOL_PLANNING_ID)
         sent = await vol_planning.send(content=(
-            f"<@&{0}>\n\n"
+            f"<@&{VOL_PING_ID}>\n\n"
             f"{message}\n\n"
             f"<:pupred:1345545008555626657> for Game Master\n"
             f"<:puppink:1345545006617989273> for Stream Tech\n"
@@ -350,12 +408,18 @@ class Cog(commands.Cog):
                                 reactors[user.id] = user
                 break
         mentions = " ".join(user.mention for user in reactors.values())
+        
+        settings_channel = await self.bot.fetch_channel(1155699597960818698)
+        await settings_channel.send(f"Used schedule change. {"Found vol planning message" if vol_planning_message is not None else "Did not find vol planning message"}")
+        await settings_channel.send(f"Match planning timestamp: {match_planning_timestamp if match_planning_timestamp is not None else "Match planning timestamp null"}")
+        await settings_channel.send(f"Vol planning timestamp: {vol_planning_timestamp if vol_planning_timestamp is not None else "Vol planning timestamp null"}")
+        await settings_channel.send(f"Message before change: {match_planning_message.content}")
 
         if action == "cancel":
             await match_planning_message.edit(
                 content=f"~~{match_planning_message.content}~~\n\n**Cancelled**"
             )
-            if vol_planning_message.author.id == self.bot.user.id:
+            if vol_planning_message and vol_planning_message.author.id == self.bot.user.id:
                 await vol_planning_message.edit(
                     content=f"~~{match_planning_message.content}~~\n\n**Cancelled**"
                 )
@@ -384,7 +448,7 @@ Please note that this match has been **CANCELLED!**"""
                 )
             )
 
-            if vol_planning_message.author.id == self.bot.user.id:
+            if vol_planning_message and vol_planning_message.author.id == self.bot.user.id:
                 await vol_planning_message.edit(
                     content=re.sub(
                         r"<t:\d+(?::[a-zA-Z])?>",
