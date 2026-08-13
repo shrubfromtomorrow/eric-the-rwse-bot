@@ -12,6 +12,7 @@ import time
 from b7teams import TEAMS
 from twitch import get_latest_vod
 import re
+from typing import cast
 
 MATCH_PLANNING_ID = 1514948806452580452
 VOL_PLANNING_ID = 1513612410991280159
@@ -25,6 +26,8 @@ class Cog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.scan_vol_assign.start()
+        self.greeters = ["hey", "hello", "hi"]
+    
 
     @commands.command()
     @commands.guild_only()
@@ -68,7 +71,7 @@ class Cog(commands.Cog):
         for reaction in message.reactions:
             if str(reaction.emoji) == "✅":
                 async for user in reaction.users():
-                    if user.id == self.bot.user.id:
+                    if self.bot.user and user.id == self.bot.user.id:
                         return True
 
         return False
@@ -94,7 +97,7 @@ class Cog(commands.Cog):
 
             timestamp = self.extract_discord_timestamp(message.content)
 
-            if now <= timestamp <= cutoff:
+            if now and timestamp and now <= timestamp <= cutoff:
                 unix_ts = int(timestamp.timestamp())
                 mention_ids = re.findall(r"<@!?(\d+)>", message.content)
                 members = []
@@ -121,7 +124,7 @@ class Cog(commands.Cog):
                 sent = await b7_runners_channel.send(text)
 
                 await message.add_reaction("✅") # fuckin unicode in my code am I johngpt
-                await sent.add_reaction("<:saintyoy:1166185013847523378>")
+                await sent.add_reaction("<:SaintYoy:1166185013847523378>")
                 
                 break
         
@@ -142,25 +145,28 @@ class Cog(commands.Cog):
             await ctx.reply(url)
     
     @discord.slash_command(description="Cancel an Eric message")
+    @commands.guild_only()
     @commands.check(
+        
         lambda ctx: any(
             role.id in {
                 1434849006734807080, #b7 staff
                 995814248003403837 #mod
             }
-            for role in ctx.author.roles
+            for role in cast(discord.Member, ctx.author).roles
         )
     )
     async def eric_timestamp_cancel(
         self,
         ctx: discord.ApplicationContext,
-        message_id: str = discord.Option(
+        message_id: str = discord.Option( # type: ignore
+            str,
             description="Scheduled message ID, click the 3 dots on the message, it's at the bottom"
         ),
     ):
         await ctx.defer(ephemeral=True)
         try:
-            message = await ctx.channel.fetch_message(int(message_id))
+            message = await cast(discord.TextChannel, ctx.channel).fetch_message(int(message_id))
         except discord.NotFound:
             await ctx.respond(
                 "We couldn't find that message in this channel. Use this command in the channel the message exists in.",
@@ -174,7 +180,7 @@ class Cog(commands.Cog):
             )
             return
 
-        if message.author.id != self.bot.user.id:
+        if self.bot.user and message.author.id != self.bot.user.id:
             await ctx.respond(
                 "That message wasn't sent by us, we can't edit it.",
                 ephemeral=True
@@ -188,7 +194,7 @@ class Cog(commands.Cog):
         await ctx.followup.send("Updated", ephemeral=True)
         
     @eric_timestamp_cancel.error
-    async def eric_timestamp_edit_error(
+    async def eric_timestamp_cancel_error(
         self,
         ctx: discord.ApplicationContext,
         error
@@ -207,16 +213,16 @@ class Cog(commands.Cog):
                 1434849006734807080, #b7 staff
                 995814248003403837 #mod
             }
-            for role in ctx.author.roles
+            for role in cast(discord.Member, ctx.author).roles
         )
     )
     async def eric_timestamp_edit(
         self,
         ctx: discord.ApplicationContext,
-        message_id: str = discord.Option(
+        message_id: str = discord.Option( # type: ignore
             description="Scheduled message ID, click the 3 dots on the message, it's at the bottom"
         ),
-        timestamp: str = discord.Option(
+        timestamp: str = discord.Option( # type: ignore
             description="Timestamp (e.g. <t:1785754801:F>)",
         ),
         
@@ -237,7 +243,7 @@ class Cog(commands.Cog):
             )
             return
 
-        if message.author.id != self.bot.user.id:
+        if self.bot.user and message.author.id != self.bot.user.id:
             await ctx.respond(
                 "That message wasn't sent by us, we can't edit it.",
                 ephemeral=True
@@ -296,15 +302,15 @@ class Cog(commands.Cog):
     async def b7_schedule(
         self,
         ctx: discord.ApplicationContext,
-        team1: str = discord.Option(
+        team1: str = discord.Option( # type: ignore
             description="Team 1",
             autocomplete=title_autocomplete,
         ),
-        team2: str = discord.Option(
+        team2: str = discord.Option( # type: ignore
             description="Team 2",
             autocomplete=title_autocomplete,
         ),
-        timestamp: str = discord.Option(
+        timestamp: str = discord.Option( # type: ignore
             description="Timestamp (e.g. <t:1785754801:F>)",
         ),
     ):
@@ -342,29 +348,29 @@ class Cog(commands.Cog):
         sent = await vol_planning.send(content=(
             f"<@&{VOL_PING_ID}>\n\n"
             f"{message}\n\n"
-            f"<:pupred:1345545008555626657> for Game Master\n"
-            f"<:puppink:1345545006617989273> for Stream Tech\n"
-            f"<:pupblue:1345545011206553642> for Commentary\n"
-            f"<:pupgreen:1345544997012897903> for Stat Tracker"
+            f"<:PupRed:1345545008555626657> for Game Master\n"
+            f"<:PupPink:1345545006617989273> for Stream Tech\n"
+            f"<:PupBlue:1345545011206553642> for Commentary\n"
+            f"<:PupGreen:1345544997012897903> for Stat Tracker"
         ))
-        await sent.add_reaction("<:pupred:1345545008555626657>")
-        await sent.add_reaction("<:puppink:1345545006617989273>")
-        await sent.add_reaction("<:pupblue:1345545011206553642>")
-        await sent.add_reaction("<:pupgreen:1345544997012897903>")
+        await sent.add_reaction("<:PupRed:1345545008555626657>")
+        await sent.add_reaction("<:PupPink:1345545006617989273>")
+        await sent.add_reaction("<:PupBlue:1345545011206553642>")
+        await sent.add_reaction("<:PupGreen:1345544997012897903>")
     
         
     @discord.slash_command(description="Change a scheduled Bingo 7 match")
     async def b7_schedule_change(
         self,
         ctx: discord.ApplicationContext,
-        message_id: str = discord.Option(
+        message_id: str = discord.Option( # type: ignore
             description="Scheduled message ID, click the 3 dots on the message, it's at the bottom"
         ),
-        action: str = discord.Option(
+        action: str = discord.Option( # type: ignore
             description="change time or cancel",
             choices=["change", "cancel"]
         ),
-        timestamp: str = discord.Option(
+        timestamp: str = discord.Option( # type: ignore
             default=None,
             description="New timestamp"
         ),
@@ -410,9 +416,9 @@ class Cog(commands.Cog):
         mentions = " ".join(user.mention for user in reactors.values())
         
         settings_channel = await self.bot.fetch_channel(1155699597960818698)
-        await settings_channel.send(f"Used schedule change. {"Found vol planning message" if vol_planning_message is not None else "Did not find vol planning message"}")
-        await settings_channel.send(f"Match planning timestamp: {match_planning_timestamp if match_planning_timestamp is not None else "Match planning timestamp null"}")
-        await settings_channel.send(f"Vol planning timestamp: {vol_planning_timestamp if vol_planning_timestamp is not None else "Vol planning timestamp null"}")
+        await settings_channel.send(f"Used schedule change. {'Found vol planning message' if vol_planning_message is not None else 'Did not find vol planning message'}")
+        await settings_channel.send(f"Match planning timestamp: {match_planning_timestamp if match_planning_timestamp is not None else 'Match planning timestamp null'}")
+        await settings_channel.send(f"Vol planning timestamp: {vol_planning_timestamp if vol_planning_timestamp is not None else 'Vol planning timestamp null'}")
         await settings_channel.send(f"Message before change: {match_planning_message.content}")
 
         if action == "cancel":
@@ -429,42 +435,43 @@ class Cog(commands.Cog):
 For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
 ({mentions})
 Please note that this match has been **CANCELLED!**"""
-
-            await vol_general_channel.send(vol_cancel_warning_message)
+            if isinstance(vol_general_channel, discord.TextChannel):
+                await vol_general_channel.send(vol_cancel_warning_message)
             
 
         elif action == "change":
             match = re.match(r"<t:(\d+)(?::[a-zA-Z])?>", timestamp)
-            unix_timestamp = int(match.group(1))
+            if match:
+                unix_timestamp = int(match.group(1))
 
-            new_timestamp = f"<t:{unix_timestamp}:F>"
+                new_timestamp = f"<t:{unix_timestamp}:F>"
 
-            await match_planning_message.edit(
-                content=re.sub(
-                    r"<t:\d+(?::[a-zA-Z])?>",
-                    new_timestamp,
-                    match_planning_message.content,
-                    count=1
-                )
-            )
-
-            if vol_planning_message and vol_planning_message.author.id == self.bot.user.id:
-                await vol_planning_message.edit(
+                await match_planning_message.edit(
                     content=re.sub(
                         r"<t:\d+(?::[a-zA-Z])?>",
                         new_timestamp,
-                        vol_planning_message.content,
+                        match_planning_message.content,
                         count=1
                     )
                 )
-            
-            vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
-            vol_cancel_warning_message = f"""## MATCH TIME UPDATED
-For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
-({mentions})
-Please note that this match has had its time **UPDATED!**"""
 
-            await vol_general_channel.send(vol_cancel_warning_message)
+                if vol_planning_message and vol_planning_message.author.id == self.bot.user.id:
+                    await vol_planning_message.edit(
+                        content=re.sub(
+                            r"<t:\d+(?::[a-zA-Z])?>",
+                            new_timestamp,
+                            vol_planning_message.content,
+                            count=1
+                        )
+                    )
+                
+                vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
+                vol_cancel_warning_message = f"""## MATCH TIME UPDATED
+    For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
+    ({mentions})
+    Please note that this match has had its time **UPDATED!**"""
+                if isinstance(vol_general_channel, discord.TextChannel):
+                    await vol_general_channel.send(vol_cancel_warning_message)
 
         await ctx.followup.send("Updated", ephemeral=True)
 
@@ -472,8 +479,8 @@ Please note that this match has had its time **UPDATED!**"""
     @commands.command(aliases=['randomslug'])
     @commands.guild_only()
     async def bingoslug(self, ctx: commands.Context):
-        if ctx.invoked_with != ctx.command.name:
-            await ctx.send(f"You used `{ctx.invoked_with}`, but we know what you meant :)")
+        if ctx.command and ctx.invoked_with != ctx.command.name:
+                await ctx.send(f"You used `{ctx.invoked_with}`, but we know what you meant :)")
         slugs = {"Monk": "https://static.wikitide.net/rainworldwiki/3/37/Monk_select_screen_layer.png", 
                           "Survivor": "https://static.wikitide.net/rainworldwiki/6/64/Survivor_select_screen_layer.png", 
                           "Hunter": "https://static.wikitide.net/rainworldwiki/7/7d/Hunter_select_screen_layer.png", 
@@ -512,7 +519,7 @@ Please note that this match has had its time **UPDATED!**"""
             modifier = "watchermode"
 
 
-        payload = {
+        payload: dict[str, str | bool] = {
             "character": cat.capitalize()
         }
 
@@ -548,7 +555,7 @@ Please note that this match has had its time **UPDATED!**"""
         embed = discord.Embed(title="Random Bingo Board:", color=0xF5BDE6, 
             description=f"""
             {f"Phew <:ArtiBoom:1492954504226934984>, the API took {elapsed:.3f} seconds!" if elapsed > 5 else ""}\n
-            For {cat.capitalize()} {"Watcher Mode" if modifier and modifier.lower() == "watchermode" else "no modifier"} we choose:""")
+            For {cat.capitalize()} {'Watcher Mode' if modifier and modifier.lower() == 'watchermode' else 'no modifier'} we choose:""")
         await ctx.reply(embed=embed)
         await ctx.send(file=file)
 
@@ -565,7 +572,7 @@ Please note that this match has had its time **UPDATED!**"""
     
         users = data["users"]
 
-        player = None
+        player = None            
 
         for entry in users:
                 info = entry["info"]
@@ -588,13 +595,13 @@ Please note that this match has had its time **UPDATED!**"""
 
         embed.add_field(
                 name="Wins",
-                value=wins,
+                value=str(wins),
                 inline=True
         )
 
         embed.add_field(
                 name="Games Played",
-                value=totalGames,
+                value=str(totalGames),
                 inline=True
         )
 
@@ -606,13 +613,25 @@ Please note that this match has had its time **UPDATED!**"""
 
         embed.add_field(
             name="ELO",
-            value=round(float(player["elo"]["stringValue"])),
+            value=str(round(float(player["elo"]["stringValue"]))),
             inline=True
         )
 
         embed.url = f"https://greatgamedota.github.io/rw-bingo-board-viewer/user/{quote(name)}"
 
         await ctx.reply(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+        content = message.content.lower()
+        for greeting in self.greeters:
+            if content.startswith(f"{greeting} eric"):
+                await message.reply(f"{greeting.capitalize()} :)")
+                break
+        if content.startswith(f"thanks eric"):
+            await message.reply("You AREN'T welcome :(" if random.random() < 0.1 else "You're welcome :)")
 
     @commands.Cog.listener()
     async def on_member_update(self, before: Member, after: Member):
