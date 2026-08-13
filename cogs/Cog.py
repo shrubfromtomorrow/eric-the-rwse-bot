@@ -26,7 +26,7 @@ class Cog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.scan_vol_assign.start()
-        self.greeters = ["hey", "hello", "hi"]
+        self.greeters = ["hey", "hello", "hi", "heya", "salut", "greetings", "bonjour", "salutations"]
     
 
     @commands.command()
@@ -627,16 +627,29 @@ Please note that this match has been **CANCELLED!**"""
             return
         content = message.content.lower()
         for greeting in self.greeters:
-            if content.startswith(f"{greeting} eric"):
+            if content.startswith(f"{greeting} eric") or content.startswith(f"{greeting}, eric"):
                 await message.reply(f"{greeting.capitalize()} :)")
                 break
-        if content.startswith(f"thanks eric"):
+        if content.startswith(f"thanks eric") or content.startswith("thank you eric"):
             await message.reply("You AREN'T welcome :(" if random.random() < 0.1 else "You're welcome :)")
+        if content.startswith(f"i hate you eric"):
+            await message.add_reaction("<:SaintYoy:1166185013847523378>")
 
     @commands.Cog.listener()
     async def on_member_update(self, before: Member, after: Member):
         await self.handle_bot_autokick(before, after)
         await self.handle_new_feature(before, after)
+
+    @discord.slash_command(description="Stab a user")
+    async def stab(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member
+    ):
+        if self.bot.user and user.id == self.bot.user.id:
+            await ctx.respond(f"Nice try {ctx.author.mention}, Erics are masters in combat <:HunterSmug:1467767463516311796>")
+        else:
+            await ctx.respond(f"{ctx.author.mention} ***STABBED*** {user.mention} <:ArtiBoom:1492954504226934984>")
 
     async def handle_bot_autokick(self, before: Member, after: Member):
         guild = await self.bot.fetch_guild(995807773138890853)
