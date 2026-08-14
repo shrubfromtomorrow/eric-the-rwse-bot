@@ -103,7 +103,7 @@ Our latency: `{(bot.latency * 1000):.2f}` ms""")
     
 @bot.command()
 async def emoteid(ctx, emoji: discord.Emoji):
-    await ctx.send(f"Emoji ID: `{emoji.id}`")
+    await ctx.send(f"Emote ID: `{emoji.id}`")
     
 
 bot.run(os.environ['DISCORD_TOKEN'])

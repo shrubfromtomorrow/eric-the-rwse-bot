@@ -432,9 +432,9 @@ class Cog(commands.Cog):
                 
             vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
             vol_cancel_warning_message = f"""## MATCH CANCELLED
-For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
-({mentions})
-Please note that this match has been **CANCELLED!**"""
+    For those who were available (and reacted) for the match at [{self.discord_timestamp(match_planning_timestamp)}]({vol_planning_message.jump_url})
+    ({mentions})
+    Please note that this match has been **CANCELLED!**"""
             if isinstance(vol_general_channel, discord.TextChannel):
                 await vol_general_channel.send(vol_cancel_warning_message)
             
@@ -467,7 +467,7 @@ Please note that this match has been **CANCELLED!**"""
                 
                 vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
                 vol_cancel_warning_message = f"""## MATCH TIME UPDATED
-    For those who were available for the match at {self.discord_timestamp(match_planning_timestamp)}
+    For those who were available (and reacted) for the match at [{self.discord_timestamp(match_planning_timestamp)}]({vol_planning_message.jump_url})
     ({mentions})
     Please note that this match has had its time **UPDATED!**"""
                 if isinstance(vol_general_channel, discord.TextChannel):
