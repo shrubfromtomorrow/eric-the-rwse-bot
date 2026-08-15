@@ -653,6 +653,35 @@ class Cog(commands.Cog):
             await ctx.respond(f"Nice try {ctx.author.mention}, Erics are masters in combat <:HunterSmug:1467767463516311796>")
         else:
             await ctx.respond(f"{ctx.author.mention} ***STABBED*** {user.mention} <:ArtiBoom:1492954504226934984>")
+            
+    @discord.slash_command(description="Grab a user's id")
+    @commands.check(
+        lambda ctx: any(
+            role.id in {
+                1434849006734807080, #b7 staff
+                995814248003403837 #mod
+            }
+            for role in cast(discord.Member, ctx.author).roles
+        )
+    )
+    async def get_id(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member
+    ):
+        await ctx.respond(f"<@{user.id}>'s ID is {user.id}", ephemeral=True)
+    
+    @get_id.error
+    async def get_id_error(
+        self,
+        ctx: discord.ApplicationContext,
+        error
+    ):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.respond(
+                "You don't have the required role to use this command.",
+                ephemeral=True
+            )
 
     async def handle_bot_autokick(self, before: Member, after: Member):
         guild = await self.bot.fetch_guild(995807773138890853)
