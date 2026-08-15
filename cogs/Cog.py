@@ -400,6 +400,7 @@ class Cog(commands.Cog):
         }
         
         vol_planning_message = None
+        vol_planning_timestamp = None
         reactors = {}
         match_planning_timestamp = self.extract_discord_timestamp(match_planning_message.content)
         vol_planning_channel = self.bot.get_channel(VOL_PLANNING_ID)
@@ -408,7 +409,8 @@ class Cog(commands.Cog):
             if vol_planning_timestamp == match_planning_timestamp:
                 vol_planning_message = message
                 for reaction in message.reactions:
-                    if reaction.emoji.id in emoji_ids:
+                    emoji_id = getattr(reaction.emoji, "id", None)
+                    if emoji_id in emoji_ids:
                         async for user in reaction.users():
                             if user.id != self.bot.user.id:
                                 reactors[user.id] = user
@@ -427,12 +429,13 @@ class Cog(commands.Cog):
             )
             if vol_planning_message and vol_planning_message.author.id == self.bot.user.id:
                 await vol_planning_message.edit(
-                    content=f"~~{match_planning_message.content}~~\n\n**Cancelled**"
+                    content=f"~~{vol_planning_message.content}~~\n\n**Cancelled**"
                 )
                 
             vol_general_channel = self.bot.get_channel(VOL_GENERAL_ID)
+            vol_jump_url = vol_planning_message.jump_url if vol_planning_message else match_planning_message.jump_url
             vol_cancel_warning_message = f"""## MATCH CANCELLED
-    For those who were available (and reacted) for the match at [{self.discord_timestamp(match_planning_timestamp)}]({vol_planning_message.jump_url})
+    For those who were available (and reacted) for the match at [{self.discord_timestamp(match_planning_timestamp)}]({vol_jump_url})
     ({mentions})
     Please note that this match has been **CANCELLED!**"""
             if isinstance(vol_general_channel, discord.TextChannel):
@@ -469,7 +472,7 @@ class Cog(commands.Cog):
                 vol_cancel_warning_message = f"""## MATCH TIME UPDATED
     For those who were available (and reacted) for the match at [{self.discord_timestamp(match_planning_timestamp)}]({vol_planning_message.jump_url})
     ({mentions})
-    Please note that this match has had its time **UPDATED!**"""
+    Please note that this match has had its time **UPDATED!** to {new_timestamp}"""
                 if isinstance(vol_general_channel, discord.TextChannel):
                     await vol_general_channel.send(vol_cancel_warning_message)
 
