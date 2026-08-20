@@ -555,6 +555,8 @@ class Cog(commands.Cog):
             filename="board.txt"
         )
 
+        
+
         embed = discord.Embed(title="Random Bingo Board:", color=0xF5BDE6, 
             description=f"""
             {f"Phew <:ArtiBoom:1492954504226934984>, the API took {elapsed:.3f} seconds!" if elapsed > 5 else ""}\n
