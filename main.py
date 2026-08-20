@@ -5,6 +5,8 @@ from discord.ext import commands
 from cogs.Cog import Cog
 import traceback
 import time
+import json
+from datetime import datetime, timezone
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -104,6 +106,119 @@ Our latency: `{(bot.latency * 1000):.2f}` ms""")
 @bot.command()
 async def emoteid(ctx, emoji: discord.Emoji):
     await ctx.send(f"Emote ID: `{emoji.id}`")
+
+# @bot.command()
+# async def userexport(ctx, user_id: str):
+#     if ctx.author.id != :
+#         return
+#     GUILD_ID = 995807773138890853
+#     guild = bot.get_guild(GUILD_ID)
+
+#     joined_at = datetime(
+#         2025,
+#         1,
+#         26,
+#         17,
+#         25,
+#         tzinfo=timezone.utc
+#     )
+
+#     if guild is None:
+#         await ctx.send("I couldn't find that server.")
+#         return
+#     user_id = int(user_id)
+#     total = 0
+
+#     filename = f"user_{user_id}_messages.jsonl"
+
+#     with open(filename, "w", encoding="utf-8") as f:
+
+#         for channel in guild.text_channels:
+
+#             permissions = channel.permissions_for(guild.me)
+
+#             if not permissions.view_channel:
+#                 continue
+
+#             if not permissions.read_message_history:
+#                 continue
+
+#             look_categories = [
+#                 995807773138890854,
+#                 1512819993190858833,
+#                 1351073644855562291,
+#                 1514948325948788877
+#             ]
+
+#             if channel.category_id not in look_categories:
+#                 continue
+
+#             print(f"Scanning #{channel.name}...")
+
+#             try:
+#                 async for message in channel.history(
+#                     limit=None,
+#                     after=joined_at,
+#                     oldest_first=True
+#                 ):
+
+#                     if message.author.id != user_id:
+#                         continue
+
+#                     data = {
+#                         "message_id": str(message.id),
+#                         "channel": {
+#                             "id": str(channel.id),
+#                             "name": channel.name
+#                         },
+#                         "author": {
+#                             "id": str(message.author.id),
+#                             "name": str(message.author)
+#                         },
+#                         "timestamp": message.created_at.isoformat(),
+#                         "content": message.content,
+#                         "jump_url": message.jump_url,
+
+#                         "attachments": [
+#                             {
+#                                 "id": str(attachment.id),
+#                                 "filename": attachment.filename,
+#                                 "url": attachment.url,
+#                                 "size": attachment.size
+#                             }
+#                             for attachment in message.attachments
+#                         ],
+
+#                         "reply_to": (
+#                             str(message.reference.message_id)
+#                             if message.reference
+#                             and message.reference.message_id
+#                             else None
+#                         ),
+
+#                         "edited_at": (
+#                             message.edited_at.isoformat()
+#                             if message.edited_at
+#                             else None
+#                         )
+#                     }
+
+#                     f.write(json.dumps(data, ensure_ascii=False) + "\n")
+
+#                     total += 1
+
+#                     if total % 1000 == 0:
+#                         f.flush()
+#                         print(f"Found {total} messages")
+
+#             except discord.Forbidden:
+#                 print(f"No access to #{channel.name}")
+
+#             except discord.HTTPException as e:
+#                 print(f"HTTP error in #{channel.name}: {e}")
+
+#     print(f"Done! Exported {total} messages.")
+#     print(f"Saved to: {filename}")
     
 
 bot.run(os.environ['DISCORD_TOKEN'])

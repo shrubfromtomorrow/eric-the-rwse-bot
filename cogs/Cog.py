@@ -542,22 +542,24 @@ class Cog(commands.Cog):
 
         for entry in boards:
             info = entry["info"]
-            acceptableBoards.append(info["boardString"]["stringValue"])
+
+            board = info["boardString"]["stringValue"]
+            board_id = info["id"]["stringValue"]
+
+            acceptableBoards.append((board, board_id))
 
         if len(acceptableBoards) == 0:
-            await ctx.reply(f"Couldn't find a board to match!")
+            await ctx.reply("Couldn't find a board to match!")
             return
 
-        board = random.choice(acceptableBoards)
+        board, board_id = random.choice(acceptableBoards)
 
         file = discord.File(
             io.BytesIO(board.encode("utf-8")),
             filename="board.txt"
         )
 
-        
-
-        embed = discord.Embed(title="Random Bingo Board:", color=0xF5BDE6, 
+        embed = discord.Embed(title="Random Bingo Board:", url=f"https://greatgamedota.github.io/rw-bingo-board-viewer/board/{board_id}", color=0xF5BDE6, 
             description=f"""
             {f"Phew <:ArtiBoom:1492954504226934984>, the API took {elapsed:.3f} seconds!" if elapsed > 5 else ""}\n
             For {cat.capitalize()} {'Watcher Mode' if modifier and modifier.lower() == 'watchermode' else 'no modifier'} we choose:""")
@@ -644,6 +646,18 @@ class Cog(commands.Cog):
     async def on_member_update(self, before: Member, after: Member):
         await self.handle_bot_autokick(before, after)
         await self.handle_new_feature(before, after)
+
+    @discord.slash_command(description="Say something as Eric")
+    @commands.check(
+        lambda ctx: ctx.author.id == 733701592582324245
+    )
+    async def say(
+        self,
+        ctx: discord.ApplicationContext,
+        message: str,
+    ):
+        await ctx.respond("Sent", ephemeral=True)
+        await ctx.channel.send(message)
 
     @discord.slash_command(description="Stab a user")
     async def stab(
