@@ -650,7 +650,6 @@ class Cog(commands.Cog):
     @commands.command()
     @commands.check(lambda ctx: ctx.author.id == 733701592582324245)
     async def say(self, ctx, *, message: str):
-        await ctx.send("Sent", delete_after=2)
         await ctx.channel.send(message)
 
     @discord.slash_command(description="Stab a user")
