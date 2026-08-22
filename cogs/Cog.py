@@ -647,11 +647,24 @@ class Cog(commands.Cog):
         await self.handle_bot_autokick(before, after)
         await self.handle_new_feature(before, after)
 
-    @commands.command()
-    @commands.check(lambda ctx: ctx.author.id == 733701592582324245)
-    async def say(self, ctx, *, message: str):
-        await ctx.message.delete()
+    @discord.slash_command(description="Say something as Eric")
+    @commands.check(
+        lambda ctx: ctx.author.id == 733701592582324245
+    )
+    async def say(
+        self,
+        ctx: discord.ApplicationContext,
+        message: str,
+    ):
+        await ctx.respond("Sent", ephemeral=True)
         await ctx.channel.send(message)
+    @say.error
+    async def say_error(self, ctx: discord.ApplicationContext, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.respond(
+                "You can't use this command.",
+                ephemeral=True
+            )
 
     @discord.slash_command(description="Stab a user")
     async def stab(
